@@ -16,11 +16,12 @@ The site cannot sign in from inside Claude's preview; it must run on your own do
 6. Project Settings > Database > Backups: turn on daily backups (paid plans give point-in-time recovery).
 
 ## 3. First-time platform setup
-1. Open the site, **Create account**, confirm email, sign in.
-2. On "Join a shop", press **Claim platform admin**. This works once only, for the first account.
-3. Workspaces > enter a shop name > **Create workspace and owner invite**. Copy the link and send it to the shop owner.
-4. The owner opens the link, creates an account (or signs in) and becomes owner of that workspace only.
-5. The owner adds categories and products, then invites cashiers and viewers from **Team**.
+1. Sign in as the Super Admin (superadmin@example.com, temporary password given when delivered). Change the password and email under *My account*.
+2. Shops > enter a shop name > **Create workspace and owner invite**. Copy the link or press **Send on WhatsApp**.
+3. The owner opens the link, enters name, email and password on the invitation page, and lands in their shop immediately. No email confirmation step, so nothing depends on the Site URL. (Invited people are created as already-confirmed users by the `accept-invite-signup` function, which only works with a valid, unused, unexpired link.)
+4. The owner chooses the shop type in Settings, adds items and invites cashiers/viewers from Team with the same kind of link.
+- If someone already has an account, they choose *I already have an account*, sign in, and the invitation is applied automatically (or paste the link under *Join a shop*).
+- Lost or expired link: Shops > **New owner invite**.
 
 ## 4. How isolation works
 - Every business table has `shop_id` and row-level security. All writes go through RPC functions that check the caller's role in the database.
@@ -70,5 +71,11 @@ Alerts are queued in the database the moment an item reaches its minimum quantit
 - **Reports:** Print / save as PDF now includes summary, payment totals, best sellers, best seller per section, best day and stock status.
 - **Guide:** in-app step-by-step guide for each role (Guide tab).
 
-## 11. Not included yet
+## 11. Troubleshooting
+- **"localhost refused to connect" after signing up:** this came from Supabase's default Site URL (`http://localhost:3000`) used in confirmation emails. Invitation sign-up no longer sends a confirmation email. Also set Authentication > URL Configuration > Site URL to your real address so password-reset emails work.
+- **Optional hardening:** Authentication > Sign In / Providers > turn off *Allow new users to sign up*. Invitation sign-up still works because it uses the server function.
+- **Owner cannot see the shop:** they must open the invitation link while signed out or sign in and paste it under *Join a shop*. Create a new owner invite if it expired.
+- **Emails stay "Waiting":** add `RESEND_API_KEY` and `MAIL_FROM` secrets (section 9).
+
+## 12. Not included yet
 Email/push notifications, bank-API payment confirmation, units conversions, stocktakes, shifts, split payments, automated tests.
