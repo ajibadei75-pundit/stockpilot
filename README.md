@@ -15,13 +15,12 @@ The site cannot sign in from inside Claude's preview; it must run on your own do
 5. Optional: enable MFA (TOTP) for admins.
 6. Project Settings > Database > Backups: turn on daily backups (paid plans give point-in-time recovery).
 
-## 3. First-time platform setup
-1. Sign in as the Super Admin (superadmin@example.com, temporary password given when delivered). Change the password and email under *My account*.
-2. Shops > enter a shop name > **Create workspace and owner invite**. Copy the link or press **Send on WhatsApp**.
-3. The owner opens the link, enters name, email and password on the invitation page, and lands in their shop immediately. No email confirmation step, so nothing depends on the Site URL. (Invited people are created as already-confirmed users by the `accept-invite-signup` function, which only works with a valid, unused, unexpired link.)
-4. The owner chooses the shop type in Settings, adds items and invites cashiers/viewers from Team with the same kind of link.
-- If someone already has an account, they choose *I already have an account*, sign in, and the invitation is applied automatically (or paste the link under *Join a shop*).
-- Lost or expired link: Shops > **New owner invite**.
+## 3. Setup and daily use
+1. Sign in as the Super Admin and change the password and email under *My account*.
+2. Shops > create a shop > send the owner invite link (Copy or WhatsApp). The owner opens it, enters name, email and password, and starts straight away.
+3. The owner opens **Settings**: logo, colour, name, phone, address, receipt message, type of shop. These appear on the app, receipts and PDF reports.
+4. The owner opens **Team** and creates logins for the **store keeper** (sees only the Sales page: sell, print receipts, own recent sales) and **viewers** (statistics, stock, and optionally sales and reports). Give them the email and password. The owner can stop access or set a new password at any time. Only people created from Team can have their password changed by the owner.
+5. **Reports** makes a detailed PDF with a QR code. Anyone who scans the QR sees the shop, dates and time it was made (no money figures); the report carries a fingerprint to detect changes.
 
 ## 4. How isolation works
 - Every business table has `shop_id` and row-level security. All writes go through RPC functions that check the caller's role in the database.
@@ -77,5 +76,11 @@ Alerts are queued in the database the moment an item reaches its minimum quantit
 - **Owner cannot see the shop:** they must open the invitation link while signed out or sign in and paste it under *Join a shop*. Create a new owner invite if it expired.
 - **Emails stay "Waiting":** add `RESEND_API_KEY` and `MAIL_FROM` secrets (section 9).
 
-## 12. Not included yet
+## 11b. Who can do what with stock
+Only the **owner** can add items, add stock, edit prices, mark damaged or expired goods, and import a list (Items > *Import list (CSV)*, columns: name, code, price, cost, stock, minimum, unit, category; use *Download template*). The database enforces this, so a store keeper or viewer cannot change stock even by calling the server directly. The store keeper only sells: item tiles show the name and price, a cart, the payment method and Complete sale, plus their last 10 sales. No discounts, stock figures, alerts or settings are shown to them (and the server allows them no discount).
+
+## 12. Simplifications in this version
+VAT is removed (all prices are final, no tax line on receipts or reports). Email alerts are removed; stock warnings appear in the app (flashing banner, colour bars). Reports are PDF only (no CSV). Store keepers have a single Sales page. The `send-alert-emails` function is no longer used and can be deleted from the Supabase dashboard.
+
+## 13. Not included yet
 Email/push notifications, bank-API payment confirmation, units conversions, stocktakes, shifts, split payments, automated tests.
