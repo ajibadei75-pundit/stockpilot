@@ -15,12 +15,12 @@ The site cannot sign in from inside Claude's preview; it must run on your own do
 5. Optional: enable MFA (TOTP) for admins.
 6. Project Settings > Database > Backups: turn on daily backups (paid plans give point-in-time recovery).
 
-## 3. Setup and daily use
-1. Sign in as the Super Admin and change the password and email under *My account*.
-2. Shops > create a shop > send the owner invite link (Copy or WhatsApp). The owner opens it, enters name, email and password, and starts straight away.
-3. The owner opens **Settings**: logo, colour, name, phone, address, receipt message, type of shop. These appear on the app, receipts and PDF reports.
-4. The owner opens **Team** and creates logins for the **store keeper** (sees only the Sales page: sell, print receipts, own recent sales) and **viewers** (statistics, stock, and optionally sales and reports). Give them the email and password. The owner can stop access or set a new password at any time. Only people created from Team can have their password changed by the owner.
-5. **Reports** makes a detailed PDF with a QR code. Anyone who scans the QR sees the shop, dates and time it was made (no money figures); the report carries a fingerprint to detect changes.
+## 3. Roles and daily use
+**Super Admin** (platform): Shops > *Create shop and owner* (shop name, owner name, email, temporary password). Per owner: *New password*, *Edit details*, *Stop/Allow access*; per shop: rename, suspend/reactivate, add another owner, access link. The Super Admin sees only the shop list, owner names/emails/last sign-in, counts and platform activity. It cannot see items, stock, sales, money, staff, receipts or reports of any shop, cannot join a shop, and cannot manage store keepers or viewers (the database and the `manage-owner` function both enforce this).
+**Owner:** signs in with the temporary password and must choose a new one immediately. The owner runs the whole shop (Settings, Items, Team, Reports) and can see an *Account activity* list in Settings, including any password reset or detail change made by the platform administrator. Owners create the store keeper and viewer logins from Team.
+**Store keeper:** only the Sales page. **Viewer:** statistics (and stock, sales, reports if the owner allows).
+Every shop is isolated by role-based database rules: a person only sees shops they belong to.
+Note: because the Super Admin can set an owner's temporary password, it could technically sign in with it before the owner does. This is prevented by policy rather than by software, so it is limited by the forced password change at first sign-in and recorded in both the platform log and the shop's own activity log.
 
 ## 4. How isolation works
 - Every business table has `shop_id` and row-level security. All writes go through RPC functions that check the caller's role in the database.
@@ -78,6 +78,12 @@ Alerts are queued in the database the moment an item reaches its minimum quantit
 
 ## 11b. Who can do what with stock
 Only the **owner** can add items, add stock, edit prices, mark damaged or expired goods, and import a list (Items > *Import list (CSV)*, columns: name, code, price, cost, stock, minimum, unit, category; use *Download template*). The database enforces this, so a store keeper or viewer cannot change stock even by calling the server directly. The store keeper only sells: item tiles show the name and price, a cart, the payment method and Complete sale, plus their last 10 sales. No discounts, stock figures, alerts or settings are shown to them (and the server allows them no discount).
+
+## 11c. One account, one shop
+Each login belongs to exactly one shop (enforced by the database). Shops have unique names and numbers, receipt numbers carry the shop number (for example RC4-1001 and RC5-1001), and every record (sale items, payments, stock movements, products and sections) must belong to the same shop as its parent record, so data can never mix between shops. To work in two shops, use two different email addresses. Opening an invite link with an account that already has a shop shows a clear message.
+
+## 11d. Notes for developers
+Sales, sale items, payments, movements, items and sections use shop-matching composite foreign keys only (no duplicate single-column keys), so the API can load a sale together with its items and payments without a "more than one relationship" error. Selling the same item many times is normal: every sale uses a fresh key, the cart clears as soon as the server accepts the sale, and the same key is reused only to retry a sale that lost its connection.
 
 ## 12. Simplifications in this version
 VAT is removed (all prices are final, no tax line on receipts or reports). Email alerts are removed; stock warnings appear in the app (flashing banner, colour bars). Reports are PDF only (no CSV). Store keepers have a single Sales page. The `send-alert-emails` function is no longer used and can be deleted from the Supabase dashboard.

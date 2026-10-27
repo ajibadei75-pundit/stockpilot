@@ -325,8 +325,10 @@ co:(d,b)=>busy(b,async()=>{const m=st.pm,tn=m=='cash'?parseFloat(val('tn')):null
  if(m!='cash'&&!rf)return toast('Enter the payment reference');
  const p={p_shop:st.cur.shop_id,p_key:st.key,p_items:st.cart.map(i=>({product_id:i.id,qty:i.qty})),p_discount_pct:st.disc,p_method:m,p_reference:rf,p_tendered:tn,p_customer:val('cu')||null};
  if(navigator.onLine){const{data:r,error}=await sb.rpc('checkout',p);
-  if(!error){const s=await db(sb.from('sales').select('*,sale_items(*),payments(*)').eq('id',r.sale_id).single());
-   st.cart=[];st.disc=0;st.key=crypto.randomUUID();toast(r.duplicate?'This sale was already recorded':'Sale '+r.receipt_no+' recorded');await posData();drawCart();receipt(s);return autoPrint()}
+  if(!error){st.cart=[];st.disc=0;st.key=crypto.randomUUID();toast(r.duplicate?'This sale was already recorded':'Sale '+r.receipt_no+' recorded');await posData();drawCart();loadMine();
+   const{data:s,error:e2}=await sb.from('sales').select('*,sale_items(*),payments(*)').eq('id',r.sale_id).single();
+   if(e2||!s)return toast('Sale '+r.receipt_no+' is saved. You can print its receipt from the sales list.');
+   receipt(s);return autoPrint()}
   if(error.code)return toast(error.message)}
  /* no connection: keep the sale on this device with its idempotency key, sync later */
  const items=st.cart.map(i=>({name:i.name,qty:i.qty,line_total:money(i.price*i.qty)})),sub=items.reduce((a,i)=>a+i.line_total,0),dv=money(sub*st.disc/100),tot=money(sub-dv);
