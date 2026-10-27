@@ -82,6 +82,9 @@ Only the **owner** can add items, add stock, edit prices, mark damaged or expire
 ## 11c. One account, one shop
 Each login belongs to exactly one shop (enforced by the database). Shops have unique names and numbers, receipt numbers carry the shop number (for example RC4-1001 and RC5-1001), and every record (sale items, payments, stock movements, products and sections) must belong to the same shop as its parent record, so data can never mix between shops. To work in two shops, use two different email addresses. Opening an invite link with an account that already has a shop shows a clear message.
 
+## 11d. Notes for developers
+Sales, sale items, payments, movements, items and sections use shop-matching composite foreign keys only (no duplicate single-column keys), so the API can load a sale together with its items and payments without a "more than one relationship" error. Selling the same item many times is normal: every sale uses a fresh key, the cart clears as soon as the server accepts the sale, and the same key is reused only to retry a sale that lost its connection.
+
 ## 12. Simplifications in this version
 VAT is removed (all prices are final, no tax line on receipts or reports). Email alerts are removed; stock warnings appear in the app (flashing banner, colour bars). Reports are PDF only (no CSV). Store keepers have a single Sales page. The `send-alert-emails` function is no longer used and can be deleted from the Supabase dashboard.
 
